@@ -1,4 +1,4 @@
-﻿using System.Web;
+﻿using Amarok.WebApp.Server.SlashCommands;
 using Discord;
 using Discord.WebSocket;
 
@@ -7,8 +7,9 @@ namespace Amarok.WebApp.Server.Services
     public class DiscordService : BackgroundService
     {
         private DiscordSocketClient _client { get; set; }
-        private ILogger<DiscordService> _logger;
+        private readonly ILogger<DiscordService> _logger;
         private readonly IConfiguration _configuration;
+        private readonly TestCommand _testCommand = new();
 
         public DiscordService(ILogger<DiscordService> logger, IConfiguration configuration)
         {
@@ -17,8 +18,8 @@ namespace Amarok.WebApp.Server.Services
             _client = new DiscordSocketClient();
 
             _logger.LogInformation("Discord Service Initialized");
+
         }
-            
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
@@ -43,9 +44,14 @@ namespace Amarok.WebApp.Server.Services
             return Task.CompletedTask;
         }
 
-        private Task _client_Ready()
+        private async Task<Task> _client_Ready()
         {
             _logger.LogInformation($"{nameof(_client)} Ready!");
+            SocketGuild guild = _client.GetGuild(895708249058340915);
+            if (guild != null)
+            {
+                await _testCommand.Build(guild, _testCommand.CommandBuilder);
+            }
             return Task.CompletedTask;
         }
 

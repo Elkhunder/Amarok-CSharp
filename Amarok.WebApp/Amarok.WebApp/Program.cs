@@ -3,9 +3,7 @@ using Amarok.WebApp.Server.Components;
 using Amarok.WebApp.Server.Components.Account;
 using Amarok.WebApp.Server.Data;
 using Amarok.WebApp.Server.Services;
-using Discord.WebSocket;
 using Microsoft.AspNetCore.Components.Authorization;
-using Microsoft.AspNetCore.DataProtection;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Serilog;
@@ -16,22 +14,23 @@ namespace Amarok.WebApp.Server
     {
         public static void Main(string[] args)
         {
-            var builder = WebApplication.CreateBuilder(args);
+            WebApplicationBuilder builder = WebApplication.CreateBuilder(args);
 
             // Add services to the container.
             builder.Services
-                .AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose:true))
+                .AddLogging(loggingBuilder => loggingBuilder.AddSerilog(dispose: true))
                 .AddRazorComponents()
                 .AddInteractiveServerComponents()
                 .AddInteractiveWebAssemblyComponents();
 
-            builder.Services.AddCascadingAuthenticationState();
-            builder.Services.AddHttpContextAccessor();
-            builder.Services.AddHostedService<DiscordService>();
-            builder.Services.AddScoped<IdentityUserAccessor>();
-            builder.Services.AddScoped<IdentityRedirectManager>();
-            builder.Services.AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
-            
+            builder.Services
+                .AddCascadingAuthenticationState()
+                .AddHttpContextAccessor()
+                .AddHostedService<DiscordService>()
+                .AddScoped<IdentityUserAccessor>()
+                .AddScoped<IdentityRedirectManager>()
+                .AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
+
 
             builder.Services.AddAuthentication(options =>
                 {
@@ -40,7 +39,7 @@ namespace Amarok.WebApp.Server
                 })
                 .AddIdentityCookies();
 
-            var connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
+            string connectionString = builder.Configuration.GetConnectionString("DefaultConnection") ?? throw new InvalidOperationException("Connection string 'DefaultConnection' not found.");
             builder.Services.AddDbContext<ApplicationDbContext>(options =>
                 options.UseSqlServer(connectionString));
             builder.Services.AddDatabaseDeveloperPageExceptionFilter();
@@ -52,7 +51,7 @@ namespace Amarok.WebApp.Server
 
             builder.Services.AddSingleton<IEmailSender<ApplicationUser>, IdentityNoOpEmailSender>();
 
-            var app = builder.Build();
+            WebApplication app = builder.Build();
             string? discordToken = string.Empty;
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -68,7 +67,7 @@ namespace Amarok.WebApp.Server
                 app.UseHsts();
                 discordToken = app.Configuration["Discord:Production_Token"];
 
-                
+
             }
             Console.WriteLine($"Discord Token: {discordToken}");
             app.UseHttpsRedirection();
@@ -84,13 +83,6 @@ namespace Amarok.WebApp.Server
             // Add additional endpoints required by the Identity /Account Razor components.
             app.MapAdditionalIdentityEndpoints();
             app.Run();
-        }
-
-        private DiscordSocketClient _client;
-
-        public async Task InitializeDiscordClientAsync()
-        {
-            _client = new DiscordSocketClient();
         }
     }
 }
