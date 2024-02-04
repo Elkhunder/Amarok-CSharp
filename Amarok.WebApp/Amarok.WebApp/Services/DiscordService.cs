@@ -1,4 +1,5 @@
-﻿using Amarok.WebApp.Server.SlashCommands;
+﻿using Amarok.WebApp.Server.Handlers;
+using Amarok.WebApp.Server.SlashCommands;
 using Discord;
 using Discord.WebSocket;
 
@@ -10,13 +11,14 @@ namespace Amarok.WebApp.Server.Services
         private readonly ILogger<DiscordService> _logger;
         private readonly IConfiguration _configuration;
         private readonly TestCommand _testCommand = new();
+        private readonly SlashCommandHandler slashCommandHandler;
 
         public DiscordService(ILogger<DiscordService> logger, IConfiguration configuration)
         {
             _logger = logger;
             _configuration = configuration;
             _client = new DiscordSocketClient();
-
+            slashCommandHandler = new(_client);
             _logger.LogInformation("Discord Service Initialized");
 
         }
@@ -28,8 +30,16 @@ namespace Amarok.WebApp.Server.Services
             _client.Ready += _client_Ready;
             _client.Disconnected += _client_Disconnected;
             _client.Connected += _client_Connected;
-            await _client.LoginAsync(Discord.TokenType.Bot, _configuration["Discord:Development_Token"]);
-            await _client.StartAsync();
+            string? token = _configuration["Discord:Development_Token"];
+            if (token != null)
+            {
+                await _client.LoginAsync(Discord.TokenType.Bot, _configuration["Discord:Development_Token"]);
+                await _client.StartAsync();
+            }
+            else
+            {
+                _logger.LogError("Discord bot token was null");
+            }
         }
 
         private Task _client_Connected()

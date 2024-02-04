@@ -31,11 +31,17 @@ namespace Amarok.WebApp.Server
                 .AddScoped<IdentityRedirectManager>()
                 .AddScoped<AuthenticationStateProvider, PersistingRevalidatingAuthenticationStateProvider>();
 
-
+            string? clientSecret = builder.Configuration["Discord:Development_Client_Secret"];
             builder.Services.AddAuthentication(options =>
                 {
                     options.DefaultScheme = IdentityConstants.ApplicationScheme;
                     options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
+                })
+                .AddDiscord(options =>
+                {
+                    options.ClientId = "893547716746035230";
+                    options.ClientSecret = clientSecret;
+                    options.Scope.Add("identity guilds email");
                 })
                 .AddIdentityCookies();
 
@@ -71,7 +77,8 @@ namespace Amarok.WebApp.Server
             }
             Console.WriteLine($"Discord Token: {discordToken}");
             app.UseHttpsRedirection();
-
+            app.UseAuthentication();
+            app.UseAuthorization();
             app.UseStaticFiles();
             app.UseAntiforgery();
 

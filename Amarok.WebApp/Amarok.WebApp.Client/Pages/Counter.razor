@@ -1,4 +1,7 @@
 ﻿@page "/counter"
+@using System.Text.Json
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
 @rendermode InteractiveAuto
 
 <PageTitle>Counter</PageTitle>
@@ -14,6 +17,9 @@
 
     private void IncrementCount()
     {
-        currentCount++;
+        var discordAuthUrl = "https://discord.com/api/oauth2/authorize?client_id=893547716746035230&permissions=8&response_type=code&redirect_uri=https%3A%2F%2Flocalhost%3A7280%2Fdiscord-callback&scope=identify+guilds+email+bot";
+        NavigationManager.NavigateTo(discordAuthUrl);
     }
+
+    
 }

@@ -1,0 +1,48 @@
+﻿@page "/discord-callback"
+@using System.Text.Json
+@inject NavigationManager NavigationManager
+@inject IConfiguration Configuration
+
+<h3>Discord_Callback</h3>
+
+@code {
+    private async Task HandleCallback()
+    {
+        var uri = new Uri(NavigationManager.Uri);
+        var queryParams = System.Web.HttpUtility.ParseQueryString(uri.Query);
+        var authorizationCode = queryParams["code"];
+        try
+        {
+            // Make an HTTP request to Discord's token endpoint
+            var tokenEndpoint = "https://discord.com/api/oauth2/token";
+            var client = new HttpClient();
+
+            var tokenRequest = new Dictionary<string, string>
+        {
+            { "client_id", "893547716746035230" },
+            { "client_secret", Configuration["Discord:Development_Client_Secret"] },
+            { "grant_type", "authorization_code" },
+            { "code", authorizationCode },
+            { "redirect_uri", "https://localhost:7280/discord-callback" }
+        };
+
+            var tokenResponse = await client.PostAsync(tokenEndpoint, new FormUrlEncodedContent(tokenRequest));
+            var tokenContent = await tokenResponse.Content.ReadAsStringAsync();
+
+            // Parse the response to extract the access token
+            var tokenObject = JsonSerializer.Deserialize<Dictionary<string, string>>(tokenContent);
+            var accessToken = tokenObject["access_token"];
+            NavigationManager.NavigateTo("/counter");
+        }
+        catch (Exception ex)
+        {
+            // Handle exceptions (e.g., log, display an error message)
+            Console.WriteLine($"Error handling callback: {ex.Message}");
+        }
+    }
+
+    protected async override void OnInitialized()
+    {
+        await HandleCallback();
+    }
+}

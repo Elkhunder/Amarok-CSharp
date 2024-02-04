@@ -8,7 +8,7 @@ namespace Amarok.WebApp.Server.Handlers
         public SlashCommandHandler(DiscordSocketClient client)
         {
             _client = client;
-            client.SlashCommandExecuted += Client_SlashCommandHandler;
+            _client.SlashCommandExecuted += Client_SlashCommandHandler;
         }
 
         private async Task Client_SlashCommandHandler(SocketSlashCommand command)
